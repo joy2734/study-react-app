@@ -20,7 +20,8 @@ class PasswordMgnProject extends Component{
 
     }
     _onPress(){
-
+        console.log("11111111111111111111111111111111111111111111111111111111")
+        this.props.navigation.navigate("PasswordListMenu")
     }
     componentDidMount(){
         console.log('1111')
@@ -30,7 +31,6 @@ class PasswordMgnProject extends Component{
 
         return (
             <View style={styles.container}>
-                <Text style={styles.topLabels}>My Passwords</Text>
                 <Text style={styles.guideText}>통합 패스워드를 입력해주세요.</Text>
                 <View style={{ margin: 30, marginTop: 0}}>
                     <PasswordInputText
@@ -44,8 +44,8 @@ class PasswordMgnProject extends Component{
                         onPress={() => this.input.clear()} />
                 </View>
                 <View style={styles.fixToText}>
-                    <Text style={[styles.button, styles.faq]} onPress={this._onFAQPress}>FAQ</Text>
-                    <Text style={[styles.button]} onPress={this._onPress}>입력</Text>
+                    <Text style={[styles.button, styles.faq]} onPress={this._onFAQPress.bind(this)}>FAQ</Text>
+                    <Text style={[styles.button]} onPress={this._onPress.bind(this)}>입력</Text>
                 </View>
             </View>
         )
