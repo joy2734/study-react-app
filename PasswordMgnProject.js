@@ -20,17 +20,17 @@ class PasswordMgnProject extends Component{
 
     }
     _onPress(){
-        console.log("11111111111111111111111111111111111111111111111111111111")
         this.props.navigation.navigate("PasswordListMenu")
     }
     componentDidMount(){
-        console.log('1111')
+        
     }
     render(){
         const {password} = this.state;
 
         return (
             <View style={styles.container}>
+                <Text style={styles.topLabels}>My Passwords</Text>
                 <Text style={styles.guideText}>통합 패스워드를 입력해주세요.</Text>
                 <View style={{ margin: 30, marginTop: 0}}>
                     <PasswordInputText
@@ -57,6 +57,12 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F5FCFF'
     },
+    fixToText: {
+        width: 170,
+        marginLeft: 110,
+        flexDirection: 'row',
+        justifyContent: 'space-between'
+    },
     topLabels:{
         backgroundColor: "#0b64ca",
         borderColor: "#0b64ca",
@@ -65,12 +71,6 @@ const styles = StyleSheet.create({
         padding: 10,
         fontSize: 20,
         color: "white"
-    },
-    fixToText: {
-        width: 170,
-        marginLeft: 110,
-        flexDirection: 'row',
-        justifyContent: 'space-between'
     },
     button:{
         color: 'white',
