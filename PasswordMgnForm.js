@@ -1,16 +1,27 @@
 import React, { Component } from "react";
-import { StyleSheet, Text, View, TextInput, FlatList} from "react-native";
+import { StyleSheet, Text, View, TextInput, FlatList, Alert} from "react-native";
 import Icon from 'react-native-vector-icons/FontAwesome';
+import _ from "underscore";
 
 const Separator = () => (
     <View style={styles.separator} />
 );
-const PasswdRfresh = () =>{
+
+const PasswdRfresh = (generator) =>{
     return (
         <View style={styles.refresh}>
-            <Icon style={styles.inputIcon} name="refresh" size={23} color="gray" />
+            <Icon style={styles.inputIcon} name="refresh" size={23} color="gray" onPress={() => generator.generator()}/>
         </View>
     )
+}
+
+const passwdGenerator = () =>{
+    let passwd = Array(15).fill("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+").map((x)=>{
+        return x[Math.floor(Math.random()*(x.length))]
+    }).join("")
+    console.log(passwd)
+    console.log(this)
+    //this.setState({passwd: passwd});
 }
 
 class PasswordMgnForm extends Component{
@@ -24,12 +35,17 @@ class PasswordMgnForm extends Component{
                 {key: "passwd", placeholder: "패스워드"},
                 {key: "website",placeholder: "웹사이트"},
                 {key: "notice", placeholder: "노트"}
-            ]
+            ],
+            selected:[],
+            passwd: "",
+            autopass: false
         }
     }
-    _renderItem = data =>{
+    _renderItem = (data) =>{
+        const {passwd} = this.state
         let inputicon = "times-circle"
         let passwdStyle = {}
+        let hide = {}
         if(data.item.key == "passwd"){
             passwdStyle = {
                 flex: 5
@@ -38,17 +54,62 @@ class PasswordMgnForm extends Component{
         if(data.item.key == "title"){
             inputicon = "paint-brush"
         }
+
+       
+        if(_.contains(this.state.selected, data.item.key)){
+            hide = {
+                display: 'none'
+            }
+        }
+
         return (
-            <View style={styles.itemInput}>
+            <View name={data.item.key} style={[styles.itemInput, hide]}>
                 <View style={[styles.inputarea, passwdStyle]}>
-                    <TextInput style={styles.input} placeholder={data.item.placeholder} name={data.item.key} />
+                    <TextInput style={styles.input} 
+                        placeholder={data.item.placeholder} 
+                        name={data.item.key} 
+                        value={data.item.key == "passwd" ? this.state.passwd: {}} 
+                        onChangeText={(passwd) => {data.item.key == "passwd" ? this.setState({ passwd }): '' }}  />
                 </View>
-                { data.item.key == "passwd"  ?  <PasswdRfresh />: <Separator/>}
-                <View style={styles.iconarea}>
-                    <Icon style={styles.inputIcon} name={inputicon} size={23} color="gray" />
+                { data.item.key == "passwd"  ?  <PasswdRfresh  generator={this.passwdGenerator} />: <Separator/>}
+                <View style={styles.iconarea} >
+                    <Icon title={data.item.key} onPress={() => this.createThreeButtonAlert(data)} style={styles.inputIcon} name={inputicon} size={23} color="gray" />
                 </View>
             </View>
         )
+    }
+    passwdGenerator = () =>{
+        let passwd = Array(15).fill("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+").map((x)=>{
+            return x[Math.floor(Math.random()*(x.length))]
+        }).join("")
+        console.log(passwd)
+        this.setState({passwd: passwd});
+    }
+    createThreeButtonAlert = (item) =>{
+        if(item.item.key == "title"){
+            this._onSelectTitleColor(item)
+        }else{
+            Alert.alert(
+                "해당 필드를 삭제하시겠습니까?",
+                "",
+                [
+                  {
+                    text: "취소",
+                    onPress: () => console.log("Cancel Pressed"),
+                    style: "cancel"
+                  },
+                  { text: "삭제", onPress: () => this._onDeleteField(item) }
+                ]
+            );
+        }
+    }
+    _onSelectTitleColor(item){
+        console.log(item)
+    }
+    _onDeleteField(item){
+        let selected = this.state.selected
+        selected.push(item.item.key)
+        this.setState({selected: selected});
     }
     _onAddPasswd(){
 
@@ -59,6 +120,9 @@ class PasswordMgnForm extends Component{
     componentDidMount(){
         
     }
+    componentDidUpdate(){
+        console.log(this.state);
+    }
     render(){
         return (
             <View style={styles.container}>
@@ -68,7 +132,7 @@ class PasswordMgnForm extends Component{
                 </View>
                 <Separator />
                 <View style={styles.middle}>
-                    <FlatList data={this.state.data} renderItem={this._renderItem} ></FlatList>
+                    <FlatList data={this.state.data} renderItem={this._renderItem.bind(this)} ></FlatList>
                 </View>
                 <View style={styles.bottom}>
                     <Text style={[styles.button]} onPress={this._onAddPasswd.bind(this)}>추가</Text>
