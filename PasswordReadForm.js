@@ -28,7 +28,7 @@ const PasswdRfresh = (generator) =>{
     )
 }
 
-class PasswordMgnForm extends Component{
+class PasswordReadForm extends Component{
     constructor(props){
         super(props)
         this.state = {
@@ -47,7 +47,8 @@ class PasswordMgnForm extends Component{
             passwd: "",
             website: "",
             notice: "",
-            autopass: false
+            autopass: false,
+            readonly: false
         }
     }
     _renderItem = (data) =>{
@@ -149,7 +150,7 @@ class PasswordMgnForm extends Component{
                 AsyncStorage.setItem('DATA', JSON.stringify(firstData ? data : parseResp));
                 Alert.alert("저장되었습니다.");
             }
-            this.props.navigation.navigate("PasswordListMenu");
+            this.props.navigation.navigate("PasswordListMenu", {"a":1});
         })
     }
     _onGoBack(){
@@ -258,4 +259,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default PasswordMgnForm;
+export default PasswordReadForm;

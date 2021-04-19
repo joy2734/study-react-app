@@ -12,7 +12,7 @@ class PasswordList extends Component{
         super(props)
         this.state = {
             data: [
-
+                
             ]
         }
 
@@ -20,6 +20,7 @@ class PasswordList extends Component{
         // {title: "구글", userId:"wngurwnd12", createDt: "2010-10-19"},
         // {title: "네이버", userId:"hjjoo", createDt: "2011-11-20"},
         // {title: "네이트", userId:"sometales", createDt: "2020-03-03"} 
+        this.props.navigation.addListener('focus', () => this._onLoad());
     }
     _renderItem = data =>{
         return (
@@ -33,17 +34,20 @@ class PasswordList extends Component{
             </View>
         )
     }
-    componentDidMount(){
+    _onLoad(){
         let data = AsyncStorage.getItem('DATA')
         .then((resp) =>{
             return JSON.parse(resp);
         })
         .then((parseResp) =>{
             if(parseResp){
-                //로드
+                this.setState({data:parseResp});
             }
             console.log(parseResp);
-        })
+        });
+    }
+    componentDidMount(){
+        this._onLoad();
     }
     _onPress(){
         this.props.navigation.navigate("PasswordMgnForm")

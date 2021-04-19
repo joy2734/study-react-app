@@ -24,7 +24,7 @@ class PasswordMgnProject extends Component{
         this.props.navigation.navigate("PasswordListMenu")
     }
     componentDidMount(){
-        AsyncStorage.removeItem('DATA');
+        //AsyncStorage.removeItem('DATA');
     }
     render(){
         const {password} = this.state;
