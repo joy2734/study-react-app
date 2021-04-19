@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { StyleSheet, Text, View, TextInput, Image, ImageBackground, Button} from "react-native";
 import PasswordInputText from 'react-native-hide-show-password-input';
+import AsyncStorage from "@react-native-community/async-storage";
 
 const Separator = () => (
     <View style={styles.separator} />
@@ -23,7 +24,7 @@ class PasswordMgnProject extends Component{
         this.props.navigation.navigate("PasswordListMenu")
     }
     componentDidMount(){
-        
+        AsyncStorage.removeItem('DATA');
     }
     render(){
         const {password} = this.state;

@@ -1,6 +1,7 @@
-import React, { Component } from "react";
+import React, { Component} from "react";
 import { StyleSheet, Text, View, FlatList} from "react-native";
 import Icon from 'react-native-vector-icons/FontAwesome';
+import AsyncStorage from "@react-native-community/async-storage";
 
 const Separator = () => (
     <View style={styles.separator} />
@@ -33,7 +34,16 @@ class PasswordList extends Component{
         )
     }
     componentDidMount(){
-        
+        let data = AsyncStorage.getItem('DATA')
+        .then((resp) =>{
+            return JSON.parse(resp);
+        })
+        .then((parseResp) =>{
+            if(parseResp){
+                //로드
+            }
+            console.log(parseResp);
+        })
     }
     _onPress(){
         this.props.navigation.navigate("PasswordMgnForm")

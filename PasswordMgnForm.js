@@ -1,5 +1,6 @@
-import React, { Component } from "react";
+import React, { Component, useState} from "react";
 import { StyleSheet, Text, View, TextInput, FlatList, Alert} from "react-native";
+import AsyncStorage from "@react-native-community/async-storage";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import _ from "underscore";
 
@@ -15,15 +16,6 @@ const PasswdRfresh = (generator) =>{
     )
 }
 
-const passwdGenerator = () =>{
-    let passwd = Array(15).fill("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+").map((x)=>{
-        return x[Math.floor(Math.random()*(x.length))]
-    }).join("")
-    console.log(passwd)
-    console.log(this)
-    //this.setState({passwd: passwd});
-}
-
 class PasswordMgnForm extends Component{
     constructor(props){
         super(props)
@@ -37,7 +29,12 @@ class PasswordMgnForm extends Component{
                 {key: "notice", placeholder: "노트"}
             ],
             selected:[],
+            title: "",
+            account:"",
+            userId: "",
             passwd: "",
+            website: "",
+            notice: "",
             autopass: false
         }
     }
@@ -68,8 +65,11 @@ class PasswordMgnForm extends Component{
                     <TextInput style={styles.input} 
                         placeholder={data.item.placeholder} 
                         name={data.item.key} 
-                        value={data.item.key == "passwd" ? this.state.passwd: {}} 
-                        onChangeText={(passwd) => {data.item.key == "passwd" ? this.setState({ passwd }): '' }}  />
+                        value={_.pick(this.state, data.item.key)[data.item.key]} 
+                        onChangeText={(input) => { 
+                            this.state[data.item.key] = input
+                            this.setState(this.state)  
+                        }}  /> 
                 </View>
                 { data.item.key == "passwd"  ?  <PasswdRfresh  generator={this.passwdGenerator} />: <Separator/>}
                 <View style={styles.iconarea} >
@@ -82,8 +82,11 @@ class PasswordMgnForm extends Component{
         let passwd = Array(15).fill("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+").map((x)=>{
             return x[Math.floor(Math.random()*(x.length))]
         }).join("")
-        console.log(passwd)
+        //console.log(passwd)
         this.setState({passwd: passwd});
+    }
+    _itemAdd = () =>{
+        console.log("아이템추가")
     }
     createThreeButtonAlert = (item) =>{
         if(item.item.key == "title"){
@@ -104,38 +107,61 @@ class PasswordMgnForm extends Component{
         }
     }
     _onSelectTitleColor(item){
-        console.log(item)
+
     }
     _onDeleteField(item){
         let selected = this.state.selected
         selected.push(item.item.key)
         this.setState({selected: selected});
     }
-    _onAddPasswd(){
-
+    _onAddPasswd(item){
+        AsyncStorage.getItem('DATA')
+        .then((resp) =>{
+            return JSON.parse(resp);
+        })
+        .then((parseResp) =>{
+            let data;
+            if(_.compact(_.values(item)).length < 6){
+                console.log("requried field")
+                Alert.alert("필드값을 모두 입력해주세요.")    
+            }else{
+                var firstData = !_.isObject(parseResp);
+                if(firstData){ 
+                    data = [_.pick(item, "title","account","userId","passwd","website","notice")];
+                }else{
+                    console.log(parseResp)
+                    parseResp.push(_.pick(item, "title","account","userId","passwd","website","notice"));
+                }
+                AsyncStorage.setItem('DATA', JSON.stringify(firstData ? data : parseResp));
+                Alert.alert("저장되었습니다.");
+            }
+            this.props.navigation.goBack();  
+        })
     }
     _onGoBack(){
         this.props.navigation.goBack();
     }
     componentDidMount(){
+        let data = AsyncStorage.getItem('DATA');
         
+        console.log(data)
     }
     componentDidUpdate(){
-        console.log(this.state);
+        //console.log(this.state);
     }
     render(){
         return (
             <View style={styles.container}>
                 <View style={styles.top}>
                     <View style={styles.goback}><Text onPress={this._onGoBack.bind(this)}><Icon name="times" size={23} color="white" /></Text></View>
-                    <View style={styles.saveArea}><Text onPress={this._onAddPasswd.bind(this)} style={styles.saveLabel}>저장</Text></View>
+                    <View style={styles.saveArea}><Text onPress={() =>{this._onAddPasswd(this.state)}} style={styles.saveLabel}>저장</Text></View>
                 </View>
                 <Separator />
                 <View style={styles.middle}>
                     <FlatList data={this.state.data} renderItem={this._renderItem.bind(this)} ></FlatList>
                 </View>
                 <View style={styles.bottom}>
-                    <Text style={[styles.button]} onPress={this._onAddPasswd.bind(this)}>추가</Text>
+                    <Text style={[styles.button]} onPress={this._itemAdd.bind(this)}>추가</Text>
                 </View>
                 <Separator />
             </View>
