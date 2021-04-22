@@ -81,7 +81,7 @@ class PasswordMgnForm extends Component{
                         onChangeText={(input) => { 
                             this.state[data.item.key] = input
                             this.setState(this.state)  
-                        }}  /> 
+                        }}/> 
                 </View>
                 { data.item.key == "passwd"  ?  <PasswdRfresh  generator={this.passwdGenerator} />: <Separator/>}
                 <View style={styles.iconarea} >
@@ -166,7 +166,7 @@ class PasswordMgnForm extends Component{
         return (
             <View style={styles.container}>
                 <View style={styles.top}>
-                    <View style={styles.goback}><Text onPress={this._onGoBack.bind(this)}><Icon name="times" size={23} color="white" /></Text></View>
+                    <View style={styles.goback}><Text onPress={this._onGoBack.bind(this)}><Icon name="arrow-left" size={23} color="white" /></Text></View>
                     <View style={styles.saveArea}><Text onPress={() =>{this._onAddPasswd(this.state)}} style={styles.saveLabel}>저장</Text></View>
                 </View>
                 <Separator />
@@ -192,13 +192,13 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         backgroundColor: "#0b64ca",
         padding: 5,
-        height: 10
+        minHeight: 10
     },
     middle:{
-        flex: 16
+        flex: 14
     },
     bottom:{
-        flex: 1,
+        flex: 2,
         flexDirection: "row",
         justifyContent: "center"
     },

@@ -1,29 +1,28 @@
-import React, { Component, useState} from "react";
-import { StyleSheet, Text, View, TextInput, FlatList, Alert} from "react-native";
+import React, { Component} from "react";
+import { StyleSheet, Text, View, FlatList, Alert, TextInput, TouchableOpacity} from "react-native";
 import AsyncStorage from "@react-native-community/async-storage";
+import Clipboard from "@react-native-community/clipboard";
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { Menu, MenuOptions, MenuOption, MenuTrigger, MenuProvider } from 'react-native-popup-menu';
 import _ from "underscore";
-//import utils from "./utils/utils";
-
-const convertDate = (date) =>{
-    var yyyy = date.getFullYear().toString();
-    var mm = (date.getMonth()+1).toString();
-    var dd  = date.getDate().toString();
-  
-    var mmChars = mm.split('');
-    var ddChars = dd.split('');
-  
-    return yyyy + '-' + (mmChars[1]?mm:"0"+mmChars[0]) + '-' + (ddChars[1]?dd:"0"+ddChars[0]);  
-};
 
 const Separator = () => (
     <View style={styles.separator} />
 );
 
-const PasswdRfresh = (generator) =>{
+const PasswdViewToggle = (props) =>{
     return (
         <View style={styles.refresh}>
-            <Icon style={styles.inputIcon} name="refresh" size={23} color="gray" onPress={() => generator.generator()}/>
+            <Icon style={styles.inputIcon} name={props.passwdVisible ? "eye-slash" : "eye"} size={24} color="gray" onPress={() => props.generator(props.passwd)}/>
+            <Icon style={styles.inputIcon} name="history" size={23} color="gray" onPress={() => generator.generator()}/>
+        </View>
+    )
+}
+
+const GoWebSite = (props) =>{
+    return (
+        <View style={styles.refresh}>
+            <Icon style={styles.inputIcon} name="paper-plane" size={23} color="gray" onPress={() => props.generator(props.url)} />
         </View>
     )
 }
@@ -33,125 +32,80 @@ class PasswordReadForm extends Component{
         super(props)
         this.state = {
             data: [                
-                {key: "title",  placeholder: "제목"},
-                {key: "account",placeholder: "계정"},
-                {key: "userId", placeholder: "유저네임"},
-                {key: "passwd", placeholder: "패스워드"},
-                {key: "website",placeholder: "웹사이트"},
-                {key: "notice", placeholder: "노트"}
+                {key: "title",     label:"제목",        value: ""},
+                {key: "account",   label:"계정",        value: ""},
+                {key: "userId",    label:"유저네임",    value: ""},
+                {key: "passwd",    label:"패스워드",    value: ""},
+                {key: "website",   label:"웹사이트",    value: ""},
+                {key: "notice",    label:"노트",        value: ""}
             ],
-            selected:[],
-            title: "",
-            account:"",
-            userId: "",
-            passwd: "",
-            website: "",
-            notice: "",
-            autopass: false,
-            readonly: false
+            passwdVisible: false
         }
+
+        this.props.navigation.addListener('focus', () => this._onLoad());
     }
     _renderItem = (data) =>{
-        const {passwd} = this.state
-        let inputicon = "times-circle"
+        const {
+            passwd, 
+            passwdVisible} 
+        = this.state;
         let passwdStyle = {}
         let hide = {}
         if(data.item.key == "passwd"){
             passwdStyle = {
-                flex: 5
+                flex: 7
             }
         }
-        if(data.item.key == "title"){
-            inputicon = "paint-brush"
-        }
 
-       
-        if(_.contains(this.state.selected, data.item.key)){
+        if(data.item.value == ""){
             hide = {
                 display: 'none'
             }
         }
-
+        
+        if(data.item.key == "title"){
+            return(
+                <View name={data.item.key} style={[styles.itemInput, hide]}></View>
+            )
+        }
         return (
             <View name={data.item.key} style={[styles.itemInput, hide]}>
-                <View style={[styles.inputarea, passwdStyle]}>
-                    <TextInput style={styles.input} 
-                        placeholder={data.item.placeholder} 
-                        name={data.item.key} 
-                        value={_.pick(this.state, data.item.key)[data.item.key]} 
-                        onChangeText={(input) => { 
-                            this.state[data.item.key] = input
-                            this.setState(this.state)  
-                        }}  /> 
+                <View style={[styles.inputarea, passwdStyle]} >
+                    <Text style={styles.inputtext}>{data.item.label}</Text>
+                    <TouchableOpacity activeOpacity={1.0} onPress={()=> this.copyClipBoard(data.item.value)}>
+                        <TextInput style={styles.input} secureTextEntry={data.item.key == "passwd" && !passwdVisible} editable={false}>{data.item.value}</TextInput>
+                    </TouchableOpacity>
                 </View>
-                { data.item.key == "passwd"  ?  <PasswdRfresh  generator={this.passwdGenerator} />: <Separator/>}
-                <View style={styles.iconarea} >
-                    <Icon title={data.item.key} onPress={() => this.createThreeButtonAlert(data)} style={styles.inputIcon} name={inputicon} size={23} color="gray" />
-                </View>
+                { data.item.key == "passwd"  ?  <PasswdViewToggle  passwd={data.item.value} passwdVisible={passwdVisible} generator={this.passwdViewGenerator} history={this.historyGenerator} />: <Separator/>}
+                { data.item.key == "website" ? <GoWebSite url={data.item.value} generator={this.goWebView}/> : <Separator/>}
             </View>
         )
     }
-    passwdGenerator = () =>{
-        let passwd = Array(15).fill("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+").map((x)=>{
-            return x[Math.floor(Math.random()*(x.length))]
-        }).join("")
-        //console.log(passwd)
-        this.setState({passwd: passwd});
+    passwdViewGenerator = (passwd) =>{
+        this.setState({passwdVisible: !this.state.passwdVisible})
     }
-    _itemAdd = () =>{
-        console.log("아이템추가")
+    historyGenerator = () =>{
+        
     }
-    createThreeButtonAlert = (item) =>{
-        if(item.item.key == "title"){
-            this._onSelectTitleColor(item)
-        }else{
-            Alert.alert(
-                "해당 필드를 삭제하시겠습니까?",
-                "",
-                [
-                  {
-                    text: "취소",
-                    onPress: () => console.log("Cancel Pressed"),
-                    style: "cancel"
-                  },
-                  { text: "삭제", onPress: () => this._onDeleteField(item) }
-                ]
-            );
-        }
+    goWebView = (url) =>{
+        this.props.navigation.navigate("AppWebView", url)
     }
-    _onSelectTitleColor(item){
-
+    copyClipBoard = (text) =>{
+        Clipboard.setString(text)
+        console.log(Clipboard.getString());
+        Alert.alert("클립보드로 복사됨")
     }
-    _onDeleteField(item){
-        let selected = this.state.selected
-        selected.push(item.item.key)
-        this.setState({selected: selected});
-    }
-    _onAddPasswd(item){
-        AsyncStorage.getItem('DATA')
-        .then((resp) =>{
-            return JSON.parse(resp);
-        })
-        .then((parseResp) =>{
-            let data;
-            if(_.compact(_.values(item)).length < 6){
-                console.log("requried field")
-                Alert.alert("필드값을 모두 입력해주세요.")    
-            }else{
-                var firstData = !_.isObject(parseResp);
-                item = _.pick(item, "title","account","userId","passwd","website","notice");
-                item["createDt"] = convertDate(new Date());
-                if(firstData){
-                    data = [item];
-                }else{
-                    console.log(parseResp)
-                    parseResp.push(item);
-                }
-                AsyncStorage.setItem('DATA', JSON.stringify(firstData ? data : parseResp));
-                Alert.alert("저장되었습니다.");
-            }
-            this.props.navigation.navigate("PasswordListMenu", {"a":1});
-        })
+     _onLoad(){
+        var item = this.props.route.params;
+        var state = _.map(this.state.data, function(v, i){
+            v.value = item[v.key]
+            return v;
+        });
+        //console.log(state)
+        this.setState({data:state,...item});
+     }
+    _onContextMenu(item){
+        console.log('contextMenu')
     }
     _onGoBack(){
         this.props.navigation.goBack();
@@ -164,18 +118,24 @@ class PasswordReadForm extends Component{
         //console.log(this.state);
     }
     render(){
+        let {
+            title
+        }= this.state
         return (
             <View style={styles.container}>
                 <View style={styles.top}>
-                    <View style={styles.goback}><Text onPress={this._onGoBack.bind(this)}><Icon name="times" size={23} color="white" /></Text></View>
-                    <View style={styles.saveArea}><Text onPress={() =>{this._onAddPasswd(this.state)}} style={styles.saveLabel}>저장</Text></View>
+                    <View style={styles.goback}><Text onPress={this._onGoBack.bind(this)}><Icon name="arrow-left" size={23} color="white" /></Text></View>
+                    <View style={styles.titleArea}><Text style={styles.title}>{title}</Text></View>
+                    <View style={styles.config}>
+                        <View style={styles.config}><Text onPress={this._onContextMenu.bind(this)}><Icon name="ellipsis-v" size={23} color="white" /></Text></View>
+                    </View>
                 </View>
                 <Separator />
                 <View style={styles.middle}>
                     <FlatList data={this.state.data} renderItem={this._renderItem.bind(this)} ></FlatList>
                 </View>
                 <View style={styles.bottom}>
-                    <Text style={[styles.button]} onPress={this._itemAdd.bind(this)}>추가</Text>
+                    <Text style={styles.updateInfo}>마지막 업데이트: 2021.4.22 오후6:00</Text>
                 </View>
                 <Separator />
             </View>
@@ -189,7 +149,7 @@ const styles = StyleSheet.create({
         justifyContent: "center"
     },
     top:{
-        flex: 1,
+        flex: 1.1,
         flexDirection: "row",
         backgroundColor: "#0b64ca",
         padding: 5,
@@ -201,15 +161,23 @@ const styles = StyleSheet.create({
     bottom:{
         flex: 1,
         flexDirection: "row",
-        justifyContent: "center"
+        justifyContent: "flex-end"
     },
     goback:{
-        flex: 6,
-        padding: 8
+        flex: 2,
+        padding: 10
     },
-    saveArea:{
+    titleArea:{
+        flex: 12,
+        paddingTop: 10
+    },
+    title:{
+        fontSize: 17,
+        color: "white"
+    },
+    config:{
         flex: 1,
-        fontSize: 15
+        paddingTop: 5
     },
     gobackLabel:{
         color: "white",
@@ -235,8 +203,15 @@ const styles = StyleSheet.create({
     input:{
         padding: 20,
         margin: 10,
+        paddingTop: 30,
+        paddingBottom: 10,
         borderBottomWidth: 1,
         borderBottomColor: "#b9b2b2"
+    },
+    inputtext:{
+        padding: 20,
+        marginBottom: -50,
+        opacity: 0.5
     },
     itemInput:{
         flex:1,
@@ -249,13 +224,19 @@ const styles = StyleSheet.create({
         flex: 6
     },
     refresh:{
-        flex: 1
+        flex: 2,
+        flexDirection: "row"        
     },
     iconarea:{
         flex: 1
     },
     inputIcon:{
-        paddingTop: 40
+        paddingTop: 40,
+        paddingRight: 20
+    },
+    updateInfo:{
+        opacity: 0.6,
+        paddingRight: 30
     }
 });
 

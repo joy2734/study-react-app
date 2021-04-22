@@ -7,6 +7,7 @@ import PasswordMgnProject from "./PasswordMgnProject";
 import PasswordList from "./PasswordList";
 import PasswordMgnForm from "./PasswordMgnForm";
 import PasswordReadForm from "./PasswordReadForm";
+import AppWebView from "./AppWebView";
 import { Button } from 'native-base';
 
 const Stack = createStackNavigator();
@@ -19,6 +20,7 @@ function App() {
         <Stack.Screen name="PasswordListMenu" component={PasswordList} />
         <Stack.Screen name="PasswordMgnForm" component={PasswordMgnForm} />
         <Stack.Screen name="PasswordReadForm" component={PasswordReadForm} />
+        <Stack.Screen name="AppWebView" component={AppWebView} />
       </Stack.Navigator>
     </NavigationContainer>
   );

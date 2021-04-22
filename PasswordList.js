@@ -16,15 +16,11 @@ class PasswordList extends Component{
             ]
         }
 
-        // 가상데이터
-        // {title: "구글", userId:"wngurwnd12", createDt: "2010-10-19"},
-        // {title: "네이버", userId:"hjjoo", createDt: "2011-11-20"},
-        // {title: "네이트", userId:"sometales", createDt: "2020-03-03"} 
         this.props.navigation.addListener('focus', () => this._onLoad());
     }
     _renderItem = data =>{
         return (
-            <View style={styles.passItem}>
+            <View style={styles.passItem} onTouchEnd={() => {this._readPasswdInfo(data.item)}}>
                 <View style={styles.shortcut}><Text style={styles.shortText}>A</Text></View>
                 <View style={styles.info}>
                     <View><Text style={styles.title}>{data.item.title}</Text></View>
@@ -52,6 +48,9 @@ class PasswordList extends Component{
     _onPress(){
         this.props.navigation.navigate("PasswordMgnForm")
     }
+    _readPasswdInfo(item){
+        this.props.navigation.navigate("PasswordReadForm", item)
+    }
     render(){
         return (
             <View style={styles.container}>
@@ -62,8 +61,8 @@ class PasswordList extends Component{
                     <View style={styles.pro}><Text style={styles.proLabel}>PRO</Text></View>
                     <View style={styles.config}><Icon name="ellipsis-v" size={23} color="white" /></View>
                 </View>
-                <View style={styles.middle}>
-                    <FlatList data={this.state.data} renderItem={this._renderItem} ></FlatList>
+                <View style={styles.middle} >
+                    <FlatList data={this.state.data} renderItem={this._renderItem}></FlatList>
                 </View>
                 <View style={styles.bottom}>
                     <View style={styles.plusIcon}><Text onPress={this._onPress.bind(this)}><Icon name="plus" size={40} color="#900" /></Text></View>
