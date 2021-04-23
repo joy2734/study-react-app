@@ -41,13 +41,16 @@ class PasswordMgnForm extends Component{
                 {key: "notice", placeholder: "노트"}
             ],
             selected:[],
+            required:["title"],
+            nameErrorList: [],
             title: "",
             account:"",
             userId: "",
             passwd: "",
             website: "",
             notice: "",
-            autopass: false
+            autopass: false,
+            nameError: null
         }
         if(this.props.route.params){
             console.log(this.props.route.params)
@@ -55,7 +58,7 @@ class PasswordMgnForm extends Component{
         }
     }
     _renderItem = (data) =>{
-        const {passwd} = this.state
+        const {passwd, nameErrorList, nameError} = this.state
         let inputicon = "times-circle"
         let passwdStyle = {}
         let hide = {}
@@ -68,7 +71,6 @@ class PasswordMgnForm extends Component{
             inputicon = "paint-brush"
         }
 
-       
         if(_.contains(this.state.selected, data.item.key)){
             hide = {
                 display: 'none'
@@ -81,11 +83,12 @@ class PasswordMgnForm extends Component{
                     <TextInput style={styles.input} 
                         placeholder={data.item.placeholder} 
                         name={data.item.key} 
-                        value={_.pick(this.state, data.item.key)[data.item.key]} 
+                        value={_.pick(this.state, data.item.key)[data.item.key]}
                         onChangeText={(input) => { 
                             this.state[data.item.key] = input
                             this.setState(this.state)  
-                        }}/> 
+                        }}/>
+                    {nameError && _.contains(nameErrorList, data.item.key) && <Text style={{ color: "red", marginLeft: 30 }}>{this.state.nameError}</Text>}
                 </View>
                 { data.item.key == "passwd"  ?  <PasswdRfresh  generator={this.passwdGenerator} />: <Separator/>}
                 <View style={styles.iconarea} >
@@ -123,7 +126,7 @@ class PasswordMgnForm extends Component{
         }
     }
     _onSelectTitleColor(item){
-
+        console.log('_onSelectTitleColor')
     }
     _onDeleteField(item){
         let selected = this.state.selected
@@ -131,30 +134,37 @@ class PasswordMgnForm extends Component{
         this.setState({selected: selected});
     }
     _onAddPasswd(item){
-        AsyncStorage.getItem('DATA')
-        .then((resp) =>{
-            return JSON.parse(resp);
-        })
-        .then((parseResp) =>{
-            let data;
-            if(_.compact(_.values(item)).length < 6){
-                console.log("requried field")
-                Alert.alert("필드값을 모두 입력해주세요.")    
-            }else{
+        var validList = this.isValid(item);
+
+        if(validList.length == 0){
+            AsyncStorage.getItem('DATA')
+            .then((resp) =>{
+                return JSON.parse(resp);
+            })
+            .then((parseResp) =>{
+                let data;
                 var firstData = !_.isObject(parseResp);
                 item = _.pick(item, "title","account","userId","passwd","website","notice");
                 item["createDt"] = convertDate(new Date());
                 if(firstData){
                     data = [item];
                 }else{
-                    console.log(parseResp)
                     parseResp.push(item);
                 }
                 AsyncStorage.setItem('DATA', JSON.stringify(firstData ? data : parseResp));
                 Alert.alert("저장되었습니다.");
-            }
-            this.props.navigation.navigate("PasswordListMenu");
-        })
+                this.props.navigation.navigate("PasswordListMenu");
+            })
+        }else{
+            this.setState({ nameError: "필수 항목 입니다.", nameErrorList: validList});
+        }
+    
+    }
+    isValid(item){
+        return _.compact(_.map(this.state.required, (v, i)=>{
+            if(item[v] == "")
+                return v
+        }));
     }
     _onGoBack(){
         this.props.navigation.goBack();
