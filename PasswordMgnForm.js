@@ -1,4 +1,4 @@
-import React, { Component, useState} from "react";
+import React, { Component} from "react";
 import { StyleSheet, Text, View, TextInput, FlatList, Alert} from "react-native";
 import AsyncStorage from "@react-native-community/async-storage";
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -48,6 +48,10 @@ class PasswordMgnForm extends Component{
             website: "",
             notice: "",
             autopass: false
+        }
+        if(this.props.route.params){
+            console.log(this.props.route.params)
+            _.extend(this.state ,this.props.route.params)
         }
     }
     _renderItem = (data) =>{

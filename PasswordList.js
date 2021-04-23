@@ -32,7 +32,7 @@ class PasswordList extends Component{
         )
     }
     _onLoad(){
-        let data = AsyncStorage.getItem('DATA')
+        AsyncStorage.getItem('DATA')
         .then((resp) =>{
             return JSON.parse(resp);
         })

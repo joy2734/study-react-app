@@ -1,10 +1,22 @@
 import React, { Component} from "react";
-import { StyleSheet, Text, View, FlatList, Alert, TextInput, TouchableOpacity} from "react-native";
+import { StyleSheet, Text, View, FlatList, Alert, TextInput, TouchableOpacity, Share} from "react-native";
 import AsyncStorage from "@react-native-community/async-storage";
 import Clipboard from "@react-native-community/clipboard";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Menu, MenuOptions, MenuOption, MenuTrigger, MenuProvider } from 'react-native-popup-menu';
 import _ from "underscore";
+import { parse } from "@babel/core";
+
+const convertDate = (date) =>{
+    var yyyy = date.getFullYear().toString();
+    var mm = (date.getMonth()+1).toString();
+    var dd  = date.getDate().toString();
+  
+    var mmChars = mm.split('');
+    var ddChars = dd.split('');
+  
+    return yyyy + '-' + (mmChars[1]?mm:"0"+mmChars[0]) + '-' + (ddChars[1]?dd:"0"+ddChars[0]);  
+};
 
 const Separator = () => (
     <View style={styles.separator} />
@@ -27,6 +39,27 @@ const GoWebSite = (props) =>{
     )
 }
 
+const onShare = async () => {
+    try { 
+        const result = await Share.share(
+            { 
+                message: '', 
+            }
+        ); 
+        if (result.action === Share.sharedAction) {
+            if (result.activityType) { 
+                console.log('activityType!'); 
+            } else {
+                 console.log('Share!'); 
+            } 
+        } else if (result.action === Share.dismissedAction) { 
+            console.log('dismissed'); 
+        } 
+    } catch (error) { 
+        alert(error.message); 
+    } 
+};
+
 class PasswordReadForm extends Component{
     constructor(props){
         super(props)
@@ -45,10 +78,7 @@ class PasswordReadForm extends Component{
         this.props.navigation.addListener('focus', () => this._onLoad());
     }
     _renderItem = (data) =>{
-        const {
-            passwd, 
-            passwdVisible} 
-        = this.state;
+        const {passwdVisible} = this.state;
         let passwdStyle = {}
         let hide = {}
         if(data.item.key == "passwd"){
@@ -93,7 +123,7 @@ class PasswordReadForm extends Component{
     copyClipBoard = (text) =>{
         Clipboard.setString(text)
         console.log(Clipboard.getString());
-        Alert.alert("클립보드로 복사됨")
+        Alert.alert("클립보드로 복사됨.")
     }
      _onLoad(){
         var item = this.props.route.params;
@@ -111,11 +141,49 @@ class PasswordReadForm extends Component{
         this.props.navigation.goBack();
     }
     componentDidMount(){
-        let data = AsyncStorage.getItem('DATA');
-        console.log(data)
+        //let data = AsyncStorage.getItem('DATA');
+        //console.log(data)
     }
     componentDidUpdate(){
         //console.log(this.state);
+    }
+    _onEditInfo(item){
+        item = _.pick(item, "title","account","userId","passwd","website","notice");
+        this.props.navigation.navigate("PasswordMgnForm", item);
+    }
+    _onDeleteInfo(item){
+        AsyncStorage.getItem('DATA')
+        .then((resp) =>{
+            return JSON.parse(resp);
+        })
+        .then((parseResp) =>{
+            var data;
+            item = _.pick(item, "title","account","userId","passwd","website","notice");
+            console.log(parseResp, item)
+            data = _.map(parseResp, (v, i)=>{
+                if(!(v.title == item.title && v.account == item.account && v.userId == item.userId && v.passwd == item.passwd))
+                    return v;
+            });
+            AsyncStorage.setItem('DATA', JSON.stringify(_.compact(data)));
+            Alert.alert("삭제되었습니다.");
+            this.props.navigation.navigate("PasswordListMenu");
+        })
+    }
+    _onCopyInfo(item){
+        item = _.pick(item, "title","account","userId","passwd","website","notice");
+        item.title = item.title + '(복사)'
+        AsyncStorage.getItem('DATA')
+        .then((resp) =>{
+            return JSON.parse(resp);
+        })
+        .then((parseResp) =>{
+            item["createDt"] = convertDate(new Date());
+            parseResp.push(item);
+            console.log(parseResp)
+            AsyncStorage.setItem('DATA', JSON.stringify(parseResp));
+            Alert.alert("복사되었습니다.");
+            this.props.navigation.navigate("PasswordListMenu");
+        })
     }
     render(){
         let {
@@ -131,12 +199,12 @@ class PasswordReadForm extends Component{
                             <Menu>
                                 <MenuTrigger><Icon name="ellipsis-v" size={23} color="white" /></MenuTrigger>
                                 <MenuOptions>
-                                    <MenuOption onSelect={() => alert(`Delete`)} text='삭제' />
-                                    <MenuOption onSelect={() => alert(`Update`)} >
+                                    <MenuOption onSelect={() => this._onDeleteInfo(this.state)} text='삭제' />
+                                    <MenuOption onSelect={() => this._onEditInfo(this.state)} >
                                     <Text>편집</Text>
                                     </MenuOption>
-                                    <MenuOption onSelect={() => alert(`copy`)} text='복사본 만들기' />
-                                    <MenuOption onSelect={() => alert(`share`)} text='공유' />
+                                    <MenuOption onSelect={() => this._onCopyInfo(this.state)} text='복사본 만들기' />
+                                    <MenuOption onSelect={() => onShare()} text='공유' />
                                 </MenuOptions>
                             </Menu>
                         </View>
