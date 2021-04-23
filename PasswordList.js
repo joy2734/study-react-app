@@ -2,6 +2,7 @@ import React, { Component} from "react";
 import { StyleSheet, Text, View, FlatList} from "react-native";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from "@react-native-community/async-storage";
+import { Menu, MenuOptions, MenuOption, MenuTrigger, MenuProvider } from 'react-native-popup-menu';
 
 const Separator = () => (
     <View style={styles.separator} />
@@ -25,7 +26,7 @@ class PasswordList extends Component{
                 <View style={styles.info}>
                     <View><Text style={styles.title}>{data.item.title}</Text></View>
                     <View><Text style={styles.userInfo}>{data.item.userId}</Text></View>
-                </View>{/* title/userid */}
+                </View>
                 <View style={styles.date}><Text style={styles.dateInfo}>{data.item.createDt}</Text></View>
             </View>
         )
@@ -53,22 +54,34 @@ class PasswordList extends Component{
     }
     render(){
         return (
-            <View style={styles.container}>
-                <View style={styles.top}>
-                    <View style={styles.config}><Icon name="align-justify" size={23} color="white" /></View>
-                    <View style={styles.topLabel}><Text style={styles.passwdLabel}>모두</Text></View>
-                    <View style={styles.scope}><Icon name="search" size={23} color="white" /></View>
-                    <View style={styles.pro}><Text style={styles.proLabel}>PRO</Text></View>
-                    <View style={styles.config}><Icon name="ellipsis-v" size={23} color="white" /></View>
+            <MenuProvider>
+                <View style={styles.container}>
+                    <View style={styles.top}>
+                        <View style={styles.config}><Icon name="align-justify" size={23} color="white" /></View>
+                        <View style={styles.topLabel}><Text style={styles.passwdLabel}>모두</Text></View>
+                        <View style={styles.scope}><Icon name="search" size={23} color="white" /></View>
+                        <View style={styles.pro}><Text style={styles.proLabel}>PRO</Text></View>
+                        <View style={styles.config}>
+                            <Menu  >
+                                <MenuTrigger><Icon name="ellipsis-v" size={23} color="white" /></MenuTrigger>
+                                <MenuOptions>
+                                    <MenuOption onSelect={() => alert(`설정창이동`)} text='설정' />
+                                    <MenuOption onSelect={() => this.props.navigation.goBack()} >
+                                    <Text>나가기</Text>
+                                    </MenuOption>
+                                </MenuOptions>
+                            </Menu>
+                        </View>
+                    </View>
+                    <View style={styles.middle} >
+                        <FlatList data={this.state.data} renderItem={this._renderItem}></FlatList>
+                    </View>
+                    <View style={styles.bottom}>
+                        <View style={styles.plusIcon}><Text onPress={this._onPress.bind(this)}><Icon name="plus" size={40} color="#900" /></Text></View>
+                    </View>
+                    <Separator />
                 </View>
-                <View style={styles.middle} >
-                    <FlatList data={this.state.data} renderItem={this._renderItem}></FlatList>
-                </View>
-                <View style={styles.bottom}>
-                    <View style={styles.plusIcon}><Text onPress={this._onPress.bind(this)}><Icon name="plus" size={40} color="#900" /></Text></View>
-                </View>
-                <Separator />
-            </View>
+            </MenuProvider>
         )
     }
 }

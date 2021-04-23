@@ -122,23 +122,35 @@ class PasswordReadForm extends Component{
             title
         }= this.state
         return (
-            <View style={styles.container}>
-                <View style={styles.top}>
-                    <View style={styles.goback}><Text onPress={this._onGoBack.bind(this)}><Icon name="arrow-left" size={23} color="white" /></Text></View>
-                    <View style={styles.titleArea}><Text style={styles.title}>{title}</Text></View>
-                    <View style={styles.config}>
-                        <View style={styles.config}><Text onPress={this._onContextMenu.bind(this)}><Icon name="ellipsis-v" size={23} color="white" /></Text></View>
+            <MenuProvider>
+                <View style={styles.container}>
+                    <View style={styles.top}>
+                        <View style={styles.goback}><Text onPress={this._onGoBack.bind(this)}><Icon name="arrow-left" size={23} color="white" /></Text></View>
+                        <View style={styles.titleArea}><Text style={styles.title}>{title}</Text></View>
+                        <View style={styles.config}>
+                            <Menu>
+                                <MenuTrigger><Icon name="ellipsis-v" size={23} color="white" /></MenuTrigger>
+                                <MenuOptions>
+                                    <MenuOption onSelect={() => alert(`Delete`)} text='삭제' />
+                                    <MenuOption onSelect={() => alert(`Update`)} >
+                                    <Text>편집</Text>
+                                    </MenuOption>
+                                    <MenuOption onSelect={() => alert(`copy`)} text='복사본 만들기' />
+                                    <MenuOption onSelect={() => alert(`share`)} text='공유' />
+                                </MenuOptions>
+                            </Menu>
+                        </View>
                     </View>
+                    <Separator />
+                    <View style={styles.middle}>
+                        <FlatList data={this.state.data} renderItem={this._renderItem.bind(this)} ></FlatList>
+                    </View>
+                    <View style={styles.bottom}>
+                        <Text style={styles.updateInfo}>마지막 업데이트: 2021.4.22 오후6:00</Text>
+                    </View>
+                    <Separator />
                 </View>
-                <Separator />
-                <View style={styles.middle}>
-                    <FlatList data={this.state.data} renderItem={this._renderItem.bind(this)} ></FlatList>
-                </View>
-                <View style={styles.bottom}>
-                    <Text style={styles.updateInfo}>마지막 업데이트: 2021.4.22 오후6:00</Text>
-                </View>
-                <Separator />
-            </View>
+            </MenuProvider>
         )
     }
 }
@@ -177,7 +189,7 @@ const styles = StyleSheet.create({
     },
     config:{
         flex: 1,
-        paddingTop: 5
+        paddingTop: 10
     },
     gobackLabel:{
         color: "white",
