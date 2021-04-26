@@ -1,9 +1,8 @@
 import React, { Component} from "react";
-import { StyleSheet, Text, View, TextInput, FlatList, Alert} from "react-native";
+import { StyleSheet, Text, View, TextInput, FlatList, Alert, Modal, Pressable} from "react-native";
 import AsyncStorage from "@react-native-community/async-storage";
 import Icon from 'react-native-vector-icons/FontAwesome';
-import _ from "underscore";
-//import utils from "./utils/utils";
+import _, { object } from "underscore";
 
 const convertDate = (date) =>{
     var yyyy = date.getFullYear().toString();
@@ -49,6 +48,9 @@ class PasswordMgnForm extends Component{
             passwd: "",
             website: "",
             notice: "",
+            objectId: 0,
+            modalVisible: false,
+            isEdit: false,
             autopass: false,
             nameError: null
         }
@@ -58,7 +60,7 @@ class PasswordMgnForm extends Component{
         }
     }
     _renderItem = (data) =>{
-        const {passwd, nameErrorList, nameError} = this.state
+        const {passwd, nameErrorList, nameError, modalVisible} = this.state
         let inputicon = "times-circle"
         let passwdStyle = {}
         let hide = {}
@@ -92,7 +94,7 @@ class PasswordMgnForm extends Component{
                 </View>
                 { data.item.key == "passwd"  ?  <PasswdRfresh  generator={this.passwdGenerator} />: <Separator/>}
                 <View style={styles.iconarea} >
-                    <Icon title={data.item.key} onPress={() => this.createThreeButtonAlert(data)} style={styles.inputIcon} name={inputicon} size={23} color="gray" />
+                    <Icon title={data.item.key} onPress={() => data.item.key == "title" ? this.setState({modalVisible:!modalVisible}) : this.createThreeButtonAlert(data)} style={styles.inputIcon} name={inputicon} size={23} color="gray" />
                 </View>
             </View>
         )
@@ -125,6 +127,10 @@ class PasswordMgnForm extends Component{
             );
         }
     }
+    selectBackground = (item) =>{
+        //console.log(item)
+
+    }
     _onSelectTitleColor(item){
         console.log('_onSelectTitleColor')
     }
@@ -144,21 +150,40 @@ class PasswordMgnForm extends Component{
             .then((parseResp) =>{
                 let data;
                 var firstData = !_.isObject(parseResp);
-                item = _.pick(item, "title","account","userId","passwd","website","notice");
+                item = _.pick(item, "title","account","userId","passwd","website","notice", "objectId");
                 item["createDt"] = convertDate(new Date());
-                if(firstData){
-                    data = [item];
-                }else{
-                    parseResp.push(item);
+
+                if(this.state.isEdit){
+                    console.log(item.objectId, parseResp)
+                    var found = parseResp.findIndex((passwd)=> passwd.objectId == item.objectId);
+                    parseResp[found] = _.extend(parseResp[found], item);
+                    AsyncStorage.setItem('DATA', JSON.stringify(parseResp));
+                    Alert.alert("수정되었습니다.");
+                    this.props.navigation.navigate("PasswordListMenu");
+                }else{                    
+                    AsyncStorage.getItem('objectId')
+                    .then((objectId)=>{
+                        item['objectId'] = objectId ? ++objectId : 1;
+                        if(firstData){    
+                            data = [item];
+                        }else{
+                            parseResp.push(item);
+                        }
+                        console.log(item["objectId"])
+                        AsyncStorage.setItem('objectId', JSON.stringify(item["objectId"]))
+                        .then(()=>{
+                            AsyncStorage.setItem('DATA', JSON.stringify(firstData ? data : parseResp));
+                            Alert.alert("저장되었습니다.");
+                            this.props.navigation.navigate("PasswordListMenu");
+                        });
+                    });
                 }
-                AsyncStorage.setItem('DATA', JSON.stringify(firstData ? data : parseResp));
-                Alert.alert("저장되었습니다.");
-                this.props.navigation.navigate("PasswordListMenu");
+
+
             })
         }else{
             this.setState({ nameError: "필수 항목 입니다.", nameErrorList: validList});
         }
-    
     }
     isValid(item){
         return _.compact(_.map(this.state.required, (v, i)=>{
@@ -171,12 +196,15 @@ class PasswordMgnForm extends Component{
     }
     componentDidMount(){
         let data = AsyncStorage.getItem('DATA');
-        console.log(data)
+        //console.log(data)
+        console.log(AsyncStorage.getItem('objectId'));
     }
     componentDidUpdate(){
-        //console.log(this.state);
     }
     render(){
+        var {
+            modalVisible
+        } = this.state;
         return (
             <View style={styles.container}>
                 <View style={styles.top}>
@@ -190,7 +218,31 @@ class PasswordMgnForm extends Component{
                 <View style={styles.bottom}>
                     <Text style={[styles.button]} onPress={this._itemAdd.bind(this)}>추가</Text>
                 </View>
-                <Separator />
+
+
+                <View style={styles.centeredView}>
+                    <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={modalVisible}
+                        onRequestClose={() => {
+                        Alert.alert("Modal has been closed.");
+                        this.setState({modalVisible:!modalVisible})
+                        }}
+                    >
+                        <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                            <Text style={styles.modalText}>Hello World!</Text>
+                            <Pressable
+                            style={[styles.mbutton, styles.buttonClose]}
+                            onPress={() => this.setState({modalVisible:!modalVisible})}
+                            >
+                            <Text style={styles.textStyle}>Hide Modal</Text>
+                            </Pressable>
+                        </View>
+                        </View>
+                    </Modal>
+                </View>
             </View>
         )
     }
@@ -202,14 +254,13 @@ const styles = StyleSheet.create({
         justifyContent: "center"
     },
     top:{
-        flex: 1,
         flexDirection: "row",
         backgroundColor: "#0b64ca",
         padding: 5,
-        minHeight: 10
+        height: 50
     },
     middle:{
-        flex: 14
+        flex: 12
     },
     bottom:{
         flex: 2,
@@ -269,7 +320,49 @@ const styles = StyleSheet.create({
     },
     inputIcon:{
         paddingTop: 40
-    }
+    },
+    ///modal
+    centeredView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 22
+      },
+      modalView: {
+        margin: 20,
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
+      },
+      mbutton: {
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2
+      },
+      buttonOpen: {
+        backgroundColor: "#F194FF",
+      },
+      buttonClose: {
+        backgroundColor: "#2196F3",
+      },
+      textStyle: {
+        color: "white",
+        fontWeight: "bold",
+        textAlign: "center"
+      },
+      modalText: {
+        marginBottom: 15,
+        textAlign: "center"
+      }
 });
 
 export default PasswordMgnForm;

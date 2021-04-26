@@ -53,22 +53,24 @@ class PasswordMgnProject extends Component{
         });
     }
     _onRegister(state){
+        let component = this;
         let errorVal = {nameError: '', nameError1: ''};
-        AsyncStorage.setItem('password', state.passwd)
-        .then(()=>{
-            if(state.passwd == "" || state.passwd1 == ""){
-                errorVal.nameError = '패스워드를 입력해주세요.'
-            }else{
-                if(state.passwd == state.passwd1){
-                    this.input.clear();
-                    this.setState({isNew: false, passwd: '', nameError: ''});
+        if(state.passwd == "" || state.passwd1 == ""){
+            errorVal.nameError = '패스워드를 입력해주세요.'
+        }else{
+            if(state.passwd == state.passwd1){
+                AsyncStorage.setItem('password', state.passwd)
+                .then(()=>{
+                    component.setState({isNew: false, passwd: '', passwd1: '', nameError: ''});
                     alert('등록되었습니다.')
-                }else{
-                    errorVal.nameError1 = '패스워드가 일치하지 않습니다.'
-                }
+                })
+            }else{
+                errorVal.nameError1 = '패스워드가 일치하지 않습니다.'
             }
-            this.setState(errorVal)
-        });
+        }
+        console.log(errorVal)
+        this.setState(errorVal)
+        //});
     }
     componentDidMount(){
         //AsyncStorage.removeItem('password')
@@ -97,10 +99,11 @@ class PasswordMgnProject extends Component{
                                     style={[styles.input, {marginBottom: 10, width: 250}]}
                                     getRef={input => this.input = input}
                                     value={passwd}
+                                    secureTextEntry={isPassword}
                                     onChangeText={(passwd) => this.setState({ passwd})}
                                     iconSize={30} 
                                 />
-                                <Icon style={styles.inputIcon} name={isPassword ?  "eye-slash" : "eye"} size={24} color="black" onPress={() => console.log('111')}/>
+                                <Icon style={styles.inputIcon} name={isPassword ?  "eye-slash" : "eye"} size={24} color="black" onPress={() => this.setState({isPassword: !isPassword})}/>
                             </View>
                             <View>
                                 {nameError && !passwd ? <Text style={{ color: "red", marginBottom: 10 }}>{this.state.nameError}</Text>:<Text></Text>}
@@ -111,12 +114,13 @@ class PasswordMgnProject extends Component{
                                     style={[styles.input, {marginBottom: 10, width: 250}]}
                                     getRef={input => this.input = input}
                                     value={passwd1}
+                                    secureTextEntry={isPassword}
                                     onChangeText={(passwd1) => this.setState({ passwd1})}
                                     iconSize={0} 
                                 />
                             </View>
                             <View>
-                                {nameError1 ? <Text style={{ color: "red", marginBottom: 10 }}>{this.state.nameError}</Text>:<Text></Text>}
+                                {nameError1 ? <Text style={{ color: "red", marginBottom: 10 }}>{this.state.nameError1}</Text>:<Text></Text>}
                                 {nameError && !passwd1? <Text style={{ color: "red", marginBottom: 10 }}>{this.state.nameError}</Text>:<Text></Text>}
                             </View>
                         </View>

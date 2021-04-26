@@ -26,7 +26,7 @@ const PasswdViewToggle = (props) =>{
     return (
         <View style={styles.refresh}>
             <Icon style={styles.inputIcon} name={props.passwdVisible ? "eye-slash" : "eye"} size={24} color="gray" onPress={() => props.generator(props.passwd)}/>
-            <Icon style={styles.inputIcon} name="history" size={23} color="gray" onPress={() => generator.generator()}/>
+            <Icon style={styles.inputIcon} name="history" size={23} color="gray" onPress={() => console.log("history view")}/>
         </View>
     )
 }
@@ -148,7 +148,8 @@ class PasswordReadForm extends Component{
         //console.log(this.state);
     }
     _onEditInfo(item){
-        item = _.pick(item, "title","account","userId","passwd","website","notice");
+        item = _.pick(item, "title","account","userId","passwd","website","notice","objectId");
+        item['isEdit'] = true;
         this.props.navigation.navigate("PasswordMgnForm", item);
     }
     _onDeleteInfo(item){
@@ -157,11 +158,9 @@ class PasswordReadForm extends Component{
             return JSON.parse(resp);
         })
         .then((parseResp) =>{
-            var data;
-            item = _.pick(item, "title","account","userId","passwd","website","notice");
-            console.log(parseResp, item)
-            data = _.map(parseResp, (v, i)=>{
-                if(!(v.title == item.title && v.account == item.account && v.userId == item.userId && v.passwd == item.passwd))
+            var objId = _.pick(item, "objectId");
+            var data = _.map(parseResp, (v, i)=>{
+                if(!(v.objectId == objId.objectId))
                     return v;
             });
             AsyncStorage.setItem('DATA', JSON.stringify(_.compact(data)));
@@ -178,11 +177,20 @@ class PasswordReadForm extends Component{
         })
         .then((parseResp) =>{
             item["createDt"] = convertDate(new Date());
-            parseResp.push(item);
-            console.log(parseResp)
-            AsyncStorage.setItem('DATA', JSON.stringify(parseResp));
-            Alert.alert("복사되었습니다.");
-            this.props.navigation.navigate("PasswordListMenu");
+
+            AsyncStorage.getItem('objectId')
+            .then((objectId)=>{
+                item['objectId'] = ++objectId;
+                AsyncStorage.setItem('objectId', JSON.stringify(item['objectId']))
+                .then(()=>{
+                    parseResp.push(item);
+                    //console.log(parseResp)
+                    AsyncStorage.setItem('DATA', JSON.stringify(parseResp));
+                    Alert.alert("복사되었습니다.");
+                    this.props.navigation.navigate("PasswordListMenu");
+                });
+
+            })
         })
     }
     render(){
