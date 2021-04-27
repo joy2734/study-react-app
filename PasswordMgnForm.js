@@ -1,8 +1,14 @@
 import React, { Component} from "react";
-import { StyleSheet, Text, View, TextInput, FlatList, Alert, Modal, Pressable} from "react-native";
+import { StyleSheet, Text, View, TextInput, FlatList, Alert, Modal, Pressable, Dimensions} from "react-native";
 import AsyncStorage from "@react-native-community/async-storage";
 import Icon from 'react-native-vector-icons/FontAwesome';
-import _, { object } from "underscore";
+import ColorPicker from 'react-native-wheel-color-picker'
+import tinycolor from 'tinycolor2';
+import _ from "underscore";
+
+const {
+    width,
+} = Dimensions.get('window');
 
 const convertDate = (date) =>{
     var yyyy = date.getFullYear().toString();
@@ -52,7 +58,9 @@ class PasswordMgnForm extends Component{
             modalVisible: false,
             isEdit: false,
             autopass: false,
-            nameError: null
+            nameError: null,
+            color: "#0b64ca",
+            oldColor: "#0b64ca"
         }
         if(this.props.route.params){
             console.log(this.props.route.params)
@@ -60,7 +68,7 @@ class PasswordMgnForm extends Component{
         }
     }
     _renderItem = (data) =>{
-        const {passwd, nameErrorList, nameError, modalVisible} = this.state
+        const {passwd, nameErrorList, nameError, modalVisible, color} = this.state
         let inputicon = "times-circle"
         let passwdStyle = {}
         let hide = {}
@@ -94,7 +102,7 @@ class PasswordMgnForm extends Component{
                 </View>
                 { data.item.key == "passwd"  ?  <PasswdRfresh  generator={this.passwdGenerator} />: <Separator/>}
                 <View style={styles.iconarea} >
-                    <Icon title={data.item.key} onPress={() => data.item.key == "title" ? this.setState({modalVisible:!modalVisible}) : this.createThreeButtonAlert(data)} style={styles.inputIcon} name={inputicon} size={23} color="gray" />
+                    <Icon title={data.item.key} onPress={() => data.item.key == "title" ? this.setState({modalVisible:!modalVisible, oldColor: color}) : this.createThreeButtonAlert(data)} style={styles.inputIcon} name={inputicon} size={23} color="gray" />
                 </View>
             </View>
         )
@@ -105,6 +113,9 @@ class PasswordMgnForm extends Component{
         }).join("")
         //console.log(passwd)
         this.setState({passwd: passwd});
+    }
+    onColorChange = (color) => {
+        this.setState({color});
     }
     _itemAdd = () =>{
         console.log("아이템추가")
@@ -128,7 +139,6 @@ class PasswordMgnForm extends Component{
         }
     }
     selectBackground = (item) =>{
-        //console.log(item)
 
     }
     _onSelectTitleColor(item){
@@ -150,11 +160,11 @@ class PasswordMgnForm extends Component{
             .then((parseResp) =>{
                 let data;
                 var firstData = !_.isObject(parseResp);
-                item = _.pick(item, "title","account","userId","passwd","website","notice", "objectId");
+                item = _.pick(item, "title","account","userId","passwd","website","notice", "objectId", "color");
                 item["createDt"] = convertDate(new Date());
 
                 if(this.state.isEdit){
-                    console.log(item.objectId, parseResp)
+                    //console.log(item.objectId, parseResp)
                     var found = parseResp.findIndex((passwd)=> passwd.objectId == item.objectId);
                     parseResp[found] = _.extend(parseResp[found], item);
                     AsyncStorage.setItem('DATA', JSON.stringify(parseResp));
@@ -196,18 +206,19 @@ class PasswordMgnForm extends Component{
     }
     componentDidMount(){
         let data = AsyncStorage.getItem('DATA');
-        //console.log(data)
-        console.log(AsyncStorage.getItem('objectId'));
+        //console.log(AsyncStorage.getItem('objectId'));
     }
     componentDidUpdate(){
     }
     render(){
         var {
-            modalVisible
+            modalVisible,
+            color,
+            oldColor
         } = this.state;
         return (
             <View style={styles.container}>
-                <View style={styles.top}>
+                <View style={[styles.top, {backgroundColor: color}]}>
                     <View style={styles.goback}><Text onPress={this._onGoBack.bind(this)}><Icon name="arrow-left" size={23} color="white" /></Text></View>
                     <View style={styles.saveArea}><Text onPress={() =>{this._onAddPasswd(this.state)}} style={styles.saveLabel}>저장</Text></View>
                 </View>
@@ -218,8 +229,6 @@ class PasswordMgnForm extends Component{
                 <View style={styles.bottom}>
                     <Text style={[styles.button]} onPress={this._itemAdd.bind(this)}>추가</Text>
                 </View>
-
-
                 <View style={styles.centeredView}>
                     <Modal
                         animationType="slide"
@@ -230,15 +239,40 @@ class PasswordMgnForm extends Component{
                         this.setState({modalVisible:!modalVisible})
                         }}
                     >
-                        <View style={styles.centeredView}>
+                    <View style={styles.centeredView}>
                         <View style={styles.modalView}>
-                            <Text style={styles.modalText}>Hello World!</Text>
-                            <Pressable
-                            style={[styles.mbutton, styles.buttonClose]}
-                            onPress={() => this.setState({modalVisible:!modalVisible})}
-                            >
-                            <Text style={styles.textStyle}>Hide Modal</Text>
-                            </Pressable>
+                            {/* <Text style={styles.modalText}>Hello World!</Text> */}
+                                <View style={{marginHorizontal: 24, marginTop: 20, height: 280, width: width - 148}}>
+                                    <ColorPicker
+                                        ref={r => { this.picker = r }}
+                                        color={color}
+                                        swatchesOnly={this.state.swatchesOnly}
+                                        onColorChange={this.onColorChange}
+                                        onColorChangeComplete={this.onColorChangeComplete}
+                                        thumbSize={40}
+                                        sliderSize={40}
+                                        noSnap={true}
+                                        row={false}
+                                        swatchesLast={this.state.swatchesLast}
+                                        swatches={this.state.swatchesEnabled}
+                                        discrete={this.state.disc}
+                                    />
+                                </View>
+                            <Separator />
+                            <View style={styles.buttonlist}>
+                                <Pressable
+                                style={[styles.mbutton, styles.buttonClose]}
+                                onPress={() => this.setState({modalVisible:!modalVisible})}
+                                >
+                                <Text style={styles.textStyle}>설정</Text>
+                                </Pressable>
+                                <Pressable
+                                style={[styles.mbutton, styles.buttonClose]}
+                                onPress={() => this.setState({modalVisible:!modalVisible, color: oldColor})}
+                                >
+                                <Text style={styles.textStyle}>닫기</Text>
+                                </Pressable>
+                            </View>
                         </View>
                         </View>
                     </Modal>
@@ -260,7 +294,7 @@ const styles = StyleSheet.create({
         height: 50
     },
     middle:{
-        flex: 12
+        flex: 15
     },
     bottom:{
         flex: 2,
@@ -329,10 +363,10 @@ const styles = StyleSheet.create({
         marginTop: 22
       },
       modalView: {
-        margin: 20,
+        width: "80%",
+        padding: 30,
         backgroundColor: "white",
         borderRadius: 20,
-        padding: 35,
         alignItems: "center",
         shadowColor: "#000",
         shadowOffset: {
@@ -343,16 +377,18 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 5
       },
+      buttonlist:{
+          flexDirection: "row"
+      },
       mbutton: {
         borderRadius: 20,
+        marginTop: 40,
+        marginRight: 10,
         padding: 10,
         elevation: 2
       },
-      buttonOpen: {
-        backgroundColor: "#F194FF",
-      },
       buttonClose: {
-        backgroundColor: "#2196F3",
+        backgroundColor: "#0b64ca",
       },
       textStyle: {
         color: "white",
@@ -362,6 +398,20 @@ const styles = StyleSheet.create({
       modalText: {
         marginBottom: 15,
         textAlign: "center"
+      },
+      thumb: {
+        width: 20,
+        height: 20,
+        borderColor: 'white',
+        borderWidth: 1,
+        borderRadius: 10,
+        shadowColor: 'black',
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowRadius: 2,
+        shadowOpacity: 0.35,
       }
 });
 

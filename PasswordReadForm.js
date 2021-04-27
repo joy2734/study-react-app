@@ -148,7 +148,7 @@ class PasswordReadForm extends Component{
         //console.log(this.state);
     }
     _onEditInfo(item){
-        item = _.pick(item, "title","account","userId","passwd","website","notice","objectId");
+        item = _.pick(item, "title","account","userId","passwd","website","notice","objectId","color");
         item['isEdit'] = true;
         this.props.navigation.navigate("PasswordMgnForm", item);
     }
@@ -169,7 +169,7 @@ class PasswordReadForm extends Component{
         })
     }
     _onCopyInfo(item){
-        item = _.pick(item, "title","account","userId","passwd","website","notice");
+        item = _.pick(item, "title","account","userId","passwd","website","notice","color");
         item.title = item.title + '(복사)'
         AsyncStorage.getItem('DATA')
         .then((resp) =>{

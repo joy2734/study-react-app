@@ -22,7 +22,7 @@ class PasswordList extends Component{
     _renderItem = data =>{
         return (
             <View style={styles.passItem} onTouchEnd={() => {this._readPasswdInfo(data.item)}}>
-                <View style={styles.shortcut}><Text style={styles.shortText}>A</Text></View>
+                <View style={styles.shortcut}><Text style={[styles.shortText, {backgroundColor: data.item.color || '#0b64ca'}]}>{data.item.title.charAt(0)}</Text></View>
                 <View style={styles.info}>
                     <View><Text style={styles.title}>{data.item.title}</Text></View>
                     <View><Text style={styles.userInfo}>{data.item.userId}</Text></View>
@@ -60,7 +60,7 @@ class PasswordList extends Component{
                         <View style={styles.config}><Icon name="align-justify" size={23} color="white" /></View>
                         <View style={styles.topLabel}><Text style={styles.passwdLabel}>모두</Text></View>
                         <View style={styles.scope}><Icon name="search" size={23} color="white" /></View>
-                        <View style={styles.pro}><Text style={styles.proLabel}>PRO</Text></View>
+                        {/* <View style={styles.pro}><Text style={styles.proLabel}>PRO</Text></View> */}
                         <View style={styles.config}>
                             <Menu  >
                                 <MenuTrigger><Icon name="ellipsis-v" size={23} color="white" /></MenuTrigger>
@@ -127,7 +127,8 @@ const styles = StyleSheet.create({
         color: "white"
     },
     scope:{
-        flex: 1
+        flex: 1,
+        marginRight: 20
     },
     plusIcon:{
         alignItems: "flex-end",
